@@ -7,4 +7,5 @@ router = APIRouter()
 def get_author_articles(author_name: str):
     pmids = pubmed_services.get_author_pmids(author_name)
     xml_data = pubmed_services.fetch_pubmed_metadata(pmids)
-    return {"author": author_name, "pmids": pmids, "raw_xml": xml_data[:500]} 
+    parsed_data = pubmed_services.parse_pubmed_xml_to_json(xml_data)
+    return parsed_data
