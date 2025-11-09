@@ -1,3 +1,4 @@
+import json
 from fastapi import FastAPI, HTTPException
 import requests
 
@@ -30,12 +31,51 @@ def get_cts(term: str | None = None, status: str | list[str]= "completed"):
         "format": "json",
         "query.term": term,
         "filter.overallStatus": ",".join(overall_status),
-        "pageSize": 1
+        "fields": "ProtocolSection",
+        "pageSize": 3
     }
     r = requests.get(STUDIES_ENDPOINT, params=params)
     r.raise_for_status()
-    return r.json()
+    data = r.json()
+
+    filtered = []
+    for study in data.get("studies", []):
+        ps = study.get("protocolSection", {})
+        rs = study.get("resultsSection", {})
+
+        id_mod = ps.get("identificationModule", {})
+        sponsor_collaborators = ps.get("sponsorCollaboratorsModule", {})
+        desc_mod = ps.get("descriptionModule", {})
+        cond_mod = ps.get("conditionsModule", {})
+        design_mod = ps.get("designModule", {})
+        outcome_mod = ps.get("outcomesModule", {})
+        eligibility_mod = ps.get("eligibilityModule", {})
+        contact_loc_mod = ps.get("contactsLocationsModule", {})
+        reference_mod = ps.get("referencesModule", {})
+
+
+
+        filtered.append({
+            "nct_id": id_mod.get("nctId", ""),
+            "official_title": id_mod.get("officialTitle", ""),
+            "brief_title": id_mod.get("briefTitle", ""),
+            "org_name": id_mod.get("organization", "").get("fullName", ""),
+            "lead_sponsor": sponsor_collaborators.get("leadSponsor", {}).get("name", ""),
+            "collaborators": [c.get("name", "") for c in sponsor_collaborators.get("collaborators", []) if c.get("name")],
+            "brief_summary": desc_mod.get("briefSummary", ""),
+            "conditions": cond_mod.get("conditions", []),
+            "keywords": cond_mod.get("keywords", []),
+            "study_type": design_mod.get("studyType", ""),
+            "enroll_count": design_mod.get("enrollmentInfo", {}).get("count", None),
+            "outcome": outcome_mod,
+            "eligibility": eligibility_mod,
+            "contact_loc": contact_loc_mod,
+            "references": reference_mod,
+            "res": rs.get("outcomeMeasuresModule", {}), #?
+        })
+    return filtered
 
 if __name__ == "__main__":
-    print(get_cts(term="diabetes", status=["paused", "terminated"]))
+    r = get_cts(term="diabetes", status=["completed"])
+    print(json.dumps(r, indent=2))
     #print(get_cts_on_condition("diabetes"))
