@@ -9,11 +9,15 @@ ESEARCH_ENDPOINT = PUBMED_BASE_URL + "esearch.fcgi"
 EFETCH_ENDPOINT = PUBMED_BASE_URL + "efetch.fcgi"
 ESUMMARY_ENDPOINT = PUBMED_BASE_URL + "esummary.fcgi"
 
-def get_author_pmids(author_name: str, max_results: int = 20):
+def search(term: str, max_results: int = 5, field_type: str = None):
     # Logic to retrieve PMIDs for a given author
+    if field_type:
+        query = f"{term}[{field_type}]"
+    else:
+        query = term
     params = {
         "db": "pubmed",
-        "term": author_name + "[Author]",
+        "term": query,
         "retmode": "json",
         "retmax": max_results
     }
@@ -23,6 +27,8 @@ def get_author_pmids(author_name: str, max_results: int = 20):
 
 def fetch_pubmed_metadata(pmids: list[str]):
     # Logic to fetch metadata for given PMIDs
+    if not pmids:
+        return []
     params = {
         "db": "pubmed",
         "id": ",".join(pmids),
@@ -33,19 +39,23 @@ def fetch_pubmed_metadata(pmids: list[str]):
     return xmltodict.parse(r.text)
 
 def parse_pubmed_xml_to_json(xml_data: dict):
-    articles = xml_data["PubmedArticleSet"]["PubmedArticle"]
+    articles = xml_data.get("PubmedArticleSet", {}).get("PubmedArticle", [])
+    if isinstance(articles, dict):
+        articles = [articles]
     cleaned_articles = []
 
     for article in articles:
-        citation = article["MedlineCitation"]
-        pmid = citation["PMID"]["#text"]
+        citation = article.get("MedlineCitation", {})
+        pmid = citation.get("PMID", {}).get("#text", "")
         date_completed = citation.get("DateCompleted", {})
 
-        article_data = citation["Article"]
+        article_data = citation.get("Article", {})
         title = article_data.get("ArticleTitle", "")
         abstract_raw = article_data.get("Abstract", {}).get("AbstractText", "")
         if isinstance(abstract_raw, dict):
             abstract_text = abstract_raw.get("#text", "")
+        elif isinstance(abstract_raw, list):
+            abstract_text = " ".join(a.get("#text", "") if isinstance(a, dict) else str(a) for a in abstract_raw).strip()
         else:
             abstract_text = abstract_raw
 
@@ -74,14 +84,26 @@ def parse_pubmed_xml_to_json(xml_data: dict):
             })
 
         journal_title = article_data.get("Journal", {}).get("Title", "")
+        language = article_data.get("Language", "")
+
+        pub_type_raw = article_data.get("PublicationTypeList", {}).get("PublicationType", [])
+        if isinstance(pub_type_raw, dict):
+            pub_types = [pub_type_raw.get("#text", "").strip()]
+        elif isinstance(pub_type_raw, list):
+            pub_types = [(p.get("#text", "") if isinstance(p, dict) else str(p)).strip() for p in pub_type_raw]
+        else:
+            pub_types = []
+        pub_type = pub_types
 
         cleaned_articles.append({
             "pmid": pmid,
+            "publication_type": pub_type,
             "title": title,
             "journal": journal_title,
-            "abstract": abstract_text,
             "authors": authors,
-            "date_completed": parse_date(date_completed)
+            "abstract": abstract_text,
+            "date_completed": parse_date(date_completed),
+            "language": language,
         })
 
     return cleaned_articles
@@ -94,6 +116,10 @@ def parse_date(date_dict: dict):
     return f"{year}-{month}-{day}"
 
 if __name__ == "__main__":
-    author_name = "Anthony Fauci"
-    pmids = get_author_pmids(author_name)
-    print(pmids)
+    #search_term = "COVID-19"
+    #pmids = search(search_term)
+    search_term = "Anthony Fauci"
+    pmids = search(search_term, 1, "Author")
+    xml_data = fetch_pubmed_metadata(pmids)
+    parsed_data = parse_pubmed_xml_to_json(xml_data)
+    print(json.dumps(parsed_data, indent=2))
