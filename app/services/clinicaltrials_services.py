@@ -72,13 +72,14 @@ def get_cts(term: str | None = None, status: str | list[str]= "completed"):
             "references": reference_mod, #?
             #"res": rs.get("outcomeMeasuresModule", {}), #?
             "phase": design_mod.get("phases", []),
-            "status": status_mod.get("overallStatus", []),
+            "status": status_mod.get("overallStatus", ""),
             "start_date": status_mod.get("startDateStruct", {}).get("date", ""),
             "completion_date": status_mod.get("completionDateStruct", {}).get("date", ""),
         })
     return filtered
 
 if __name__ == "__main__":
-    r = get_cts(term="diabetes", status=["completed"])
+    r = get_cts(term="leukemia")
+    #r = get_cts(term="heart disease", status=["completed"])
     print(json.dumps(r, indent=2))
     #print(get_cts_on_condition("diabetes"))
