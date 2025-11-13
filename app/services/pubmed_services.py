@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from cache_services import cache_pubmed_entries
 import xmltodict, json
 import requests
 
@@ -42,12 +43,21 @@ def parse_pubmed_xml_to_json(xml_data: dict):
     articles = xml_data.get("PubmedArticleSet", {}).get("PubmedArticle", [])
     if isinstance(articles, dict):
         articles = [articles]
-    cleaned_articles = []
+    filtered = []
 
     for article in articles:
         citation = article.get("MedlineCitation", {})
         pmid = citation.get("PMID", {}).get("#text", "")
-        date_completed = citation.get("DateCompleted", {})
+        if not pmid: continue
+        pubmed_data = article.get("PubmedData", {})
+        date_data = pubmed_data.get("History", {}).get("PubMedPubDate", {})
+        if isinstance(date_data, dict):
+            date_data = [date_data]
+        date_published = None
+        for date in date_data:
+            if date.get("@PubStatus") == "pubmed":
+                date_published = date
+                break
 
         article_data = citation.get("Article", {})
         title = article_data.get("ArticleTitle", "")
@@ -95,18 +105,18 @@ def parse_pubmed_xml_to_json(xml_data: dict):
             pub_types = []
         pub_type = pub_types
 
-        cleaned_articles.append({
+        filtered.append({
             "pmid": pmid,
             "publication_type": pub_type,
             "title": title,
-            "journal": journal_title,
+            "journal_title": journal_title,
             "authors": authors,
             "abstract": abstract_text,
-            "date_completed": parse_date(date_completed),
+            "date_published": parse_date(date_published),
             "language": language,
         })
 
-    return cleaned_articles
+    return filtered
 
 def parse_date(date_dict: dict):
     if not date_dict: return
@@ -116,10 +126,10 @@ def parse_date(date_dict: dict):
     return f"{year}-{month}-{day}"
 
 if __name__ == "__main__":
-    #search_term = "COVID-19"
-    #pmids = search(search_term)
-    search_term = "Anthony Fauci"
-    pmids = search(search_term, 1, "Author")
+    search_term = "Diabetes"
+    pmids = search(search_term, 5)
+    #pmids = search(search_term, 5, "Author")
     xml_data = fetch_pubmed_metadata(pmids)
     parsed_data = parse_pubmed_xml_to_json(xml_data)
+    cache_pubmed_entries(parsed_data)
     print(json.dumps(parsed_data, indent=2))
