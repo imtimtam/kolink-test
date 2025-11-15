@@ -12,3 +12,8 @@ def cache_pubmed_entries(entries: list[dict]):
     if not entries:
         return None
     return supabase.table("pubmed").upsert(entries, on_conflict="pmid").execute()
+
+def cache_clinicaltrials_entries(entries: list[dict]):
+    if not entries:
+        return None
+    return supabase.table("clinicaltrials").upsert(entries, on_conflict="nct_id").execute()
