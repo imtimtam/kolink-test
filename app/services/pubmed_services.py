@@ -10,12 +10,9 @@ ESEARCH_ENDPOINT = PUBMED_BASE_URL + "esearch.fcgi"
 EFETCH_ENDPOINT = PUBMED_BASE_URL + "efetch.fcgi"
 ESUMMARY_ENDPOINT = PUBMED_BASE_URL + "esummary.fcgi"
 
-def search(term: str, max_results: int = 5, field_type: str = None):
+def search(term: str, max_results: int = 5000, field_type: str = None):
     # Logic to retrieve PMIDs for a given author
-    if field_type:
-        query = f"{term}[{field_type}]"
-    else:
-        query = term
+    query = f"{term}[{field_type}]" if field_type else term
     params = {
         "db": "pubmed",
         "term": query,
@@ -105,6 +102,21 @@ def parse_pubmed_xml_to_json(xml_data: dict):
             pub_types = []
         pub_type = pub_types
 
+        mesh_list = citation.get("MeshHeadingList", {}).get("MeshHeading", [])
+        if isinstance(mesh_list, dict):
+            mesh_list = [mesh_list]
+
+        mesh_terms = []
+        for mesh in mesh_list:
+            descriptor = mesh.get("DescriptorName", {})
+            if isinstance(descriptor, dict):
+                term = descriptor.get("#text", "")
+            else:
+                term = str(descriptor)
+            
+            if term:
+                mesh_terms.append(term)
+
         filtered.append({
             "pmid": pmid,
             "publication_type": pub_type,
@@ -112,6 +124,7 @@ def parse_pubmed_xml_to_json(xml_data: dict):
             "journal_title": journal_title,
             "authors": authors,
             "abstract": abstract_text,
+            "mesh_terms": mesh_terms,
             "date_published": parse_date(date_published),
             "language": language,
         })
@@ -119,8 +132,10 @@ def parse_pubmed_xml_to_json(xml_data: dict):
     return filtered
 
 def parse_date(date_dict: dict):
-    if not date_dict: return
-    year = date_dict.get("Year", "0000")
+    if not date_dict: return None
+    year = date_dict.get("Year")
+    if not year: return None
+    
     month = date_dict.get("Month", "01").zfill(2)
     day = date_dict.get("Day", "01").zfill(2)
     return f"{year}-{month}-{day}"

@@ -1,4 +1,5 @@
 import json
+from cache_services import cache_clinicaltrials_entries
 from fastapi import FastAPI, HTTPException
 import requests
 
@@ -32,7 +33,7 @@ def get_cts(term: str | None = None, status: str | list[str]= "completed"):
         "query.term": term,
         "filter.overallStatus": ",".join(overall_status),
         "fields": "ProtocolSection",
-        "pageSize": 3
+        "pageSize": 5
     }
     r = requests.get(STUDIES_ENDPOINT, params=params)
     r.raise_for_status()
@@ -73,13 +74,22 @@ def get_cts(term: str | None = None, status: str | list[str]= "completed"):
             #"res": rs.get("outcomeMeasuresModule", {}), #?
             "phase": design_mod.get("phases", []),
             "status": status_mod.get("overallStatus", ""),
-            "start_date": status_mod.get("startDateStruct", {}).get("date", ""),
-            "completion_date": status_mod.get("completionDateStruct", {}).get("date", ""),
+            "start_date": parse_date(status_mod.get("startDateStruct", {}).get("date", "")),
+            "completion_date": parse_date(status_mod.get("completionDateStruct", {}).get("date", "")),
         })
     return filtered
 
+def parse_date(date_str: str):
+    if not date_str: return None
+    split = date_str.split("-")
+    year = split[0]
+    month = split[1].zfill(2) if len(split) > 1 else "01"
+    day = split[2].zfill(2) if len(split) > 2  else "01"
+    return f"{year}-{month}-{day}"
+
 if __name__ == "__main__":
-    r = get_cts(term="leukemia")
+    r = get_cts(term="covid-19")
     #r = get_cts(term="heart disease", status=["completed"])
+    cache_clinicaltrials_entries(r)
     print(json.dumps(r, indent=2))
     #print(get_cts_on_condition("diabetes"))
