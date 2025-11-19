@@ -65,6 +65,11 @@ def parse_clinicaltrials_json(cts: dict):
         eligibility_mod = ps.get("eligibilityModule", {})
         contact_loc_mod = ps.get("contactsLocationsModule", {})
         reference_mod = ps.get("referencesModule", {})
+        reference_list = []
+        for ref in reference_mod.get("references", []):
+            pmid = ref.get("pmid")
+            if pmid:
+                reference_list.append(pmid)
         status_mod = ps.get("statusModule", {})
 
         filtered.append({
@@ -77,12 +82,12 @@ def parse_clinicaltrials_json(cts: dict):
             "brief_summary": desc_mod.get("briefSummary", ""),
             "conditions": cond_mod.get("conditions", []),
             "keywords": cond_mod.get("keywords", []),
-            #"study_type": design_mod.get("studyType", ""),
+            "study_type": design_mod.get("studyType", ""),
             #"enroll_count": design_mod.get("enrollmentInfo", {}).get("count", None),
             #"outcome": outcome_mod,
             #"eligibility": eligibility_mod,
             #"contact_loc": contact_loc_mod,
-            "references": reference_mod, #?
+            "reference_pmid": reference_list,
             #"res": rs.get("outcomeMeasuresModule", {}), #?
             "phase": design_mod.get("phases", []),
             "status": status_mod.get("overallStatus", ""),
