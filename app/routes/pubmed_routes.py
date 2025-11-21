@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.services import pubmed_services
+from app.services.pubmed.api_pipeline import pubmed_services
 
 router = APIRouter()
 
