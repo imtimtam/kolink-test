@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from cache_services import cache_pubmed_entries
 import xmltodict, json
 import requests
 
@@ -144,5 +143,4 @@ if __name__ == "__main__":
     #pmids = search(search_term, 5, "Author")
     xml_data = fetch_pubmed_metadata(pmids)
     parsed_data = parse_pubmed_xml_to_json(xml_data)
-    cache_pubmed_entries(parsed_data)
     print(json.dumps(parsed_data, indent=2))

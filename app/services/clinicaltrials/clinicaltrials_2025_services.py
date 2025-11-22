@@ -1,6 +1,5 @@
 import json
-from cache_services import cache_clinicaltrials_entries
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 import requests
 import os
 
@@ -141,8 +140,8 @@ def export_year(year: int):
     print(f"All trials for {year} exported to {full_path}")
 
 if __name__ == "__main__":
-    for year in range(2021, 2026):
-        export_year(year)
-    # for batch in clinicaltrials_fetch_batches(max_count=20, pageSize=5):
-    #     parsed_trials = parse_clinicaltrials_json(batch)
-    #     print(json.dumps(parsed_trials, indent=2))
+    # for year in range(2021, 2026):
+    #     export_year(year)
+    for batch in clinicaltrials_fetch_batches(max_count=20, pageSize=5):
+        parsed_trials = parse_clinicaltrials_json(batch)
+        print(json.dumps(parsed_trials, indent=2))
