@@ -18,6 +18,7 @@ FTP_DAILY_DIR = "/pubmed/updatefiles/"
 
 if __name__ == "__main__":
     # Just run whatever is necessary
-    # download_gz_files()
-    # parse_export_pubmed(starting_index=1275)
+    # python -m app.services.pubmed.dataset_pipeline.etl
+    # download_gz_files(FTP_HOST, FTP_DAILY_DIR, LOCAL_DAILY_DIR)
+    parse_export_pubmed(LOCAL_BASELINE_DIR, output_dir=OUTPUT_DIR)
     pass

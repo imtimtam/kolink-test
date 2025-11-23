@@ -174,7 +174,6 @@ def parse_pubmed_article(elem):
     }
 
 def parse_export_pubmed(sample_limit=None, starting_index=1):
-    """Parse all files and write each PubMed article once per year (update if exists)."""
     for filename in sorted(os.listdir(LOCAL_DAILY_DIR)):
         if not filename.endswith(".gz"):
             continue
