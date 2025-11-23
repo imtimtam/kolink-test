@@ -17,7 +17,7 @@ def clinicaltrials_fetch_batches(
     if date_range:
         start, end = date_range
     else:
-        start, end = "2025-01-01", "2025-12-31"
+        start, end = "2025-01-01", "2025-12-31" # default to 2025
     term = f"AREA[LastUpdatePostDate]RANGE[{start},{end}]"
     
     params = {
