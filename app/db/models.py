@@ -2,7 +2,7 @@ from sqlalchemy import ARRAY, Integer, String, BigInteger, Date, Text, Column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from .base import Base
-import datetime
+from datetime import date
 
 class PubMed(Base):
     __tablename__ = 'pubmed'
@@ -14,7 +14,7 @@ class PubMed(Base):
     authors: Mapped[dict] = mapped_column(JSONB, nullable=False)
     abstract: Mapped[str | None] = mapped_column(Text, nullable=True)
     mesh_terms: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
-    date_published: Mapped[datetime.date | None] = mapped_column(Date, nullable=True)
+    date_published: Mapped[date | None] = mapped_column(Date, nullable=True)
     language: Mapped[str | None] = mapped_column(String, nullable=True)
 
 class ClinicalTrials(Base):
@@ -37,9 +37,9 @@ class ClinicalTrials(Base):
     country: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)
     reference_pmid: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
-    start_date: Mapped[datetime.date | None] = mapped_column(Date, nullable=True)
-    completion_date: Mapped[datetime.date | None] = mapped_column(Date, nullable=True)
-    last_update_post_date: Mapped[datetime.date | None] = mapped_column(Date, nullable=True)
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    completion_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    last_update_post_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     # nct_id = Column(String, primary_key=True)
     # official_title = Column(String, nullable=True)
     # brief_title = Column(String, nullable=False)
