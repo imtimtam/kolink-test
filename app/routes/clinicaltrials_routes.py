@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func, select, or_
 from datetime import date
@@ -9,9 +9,9 @@ from app.db.session import get_db
 from app.db.models import ClinicalTrials
 
 # uvicorn app.routes.clinicaltrials_routes:app --reload
-app = FastAPI()
+router = APIRouter()
 
-@app.get("/clinicaltrials", response_model=List[ClinicalTrialsSearchResponse])
+@router.get("/clinicaltrials", response_model=List[ClinicalTrialsSearchResponse])
 def search_clinicaltrials(
     term: str | None = None,
     nct_id: str | None = None,
@@ -23,6 +23,7 @@ def search_clinicaltrials(
     status: str | None = None,
     start_date: date | None = None,
     completion_date: date | None = None,
+    limit: int = 5,
     db: Session = Depends(get_db)
 ):
     stmt = select(ClinicalTrials)
@@ -57,15 +58,17 @@ def search_clinicaltrials(
         ))
 
     if filters:
-        stmt = stmt.where(*filters).limit(5)
+        stmt = stmt.where(*filters)
+    if limit:
+        stmt = stmt.limit(limit)
 
     results = db.scalars(stmt).all()
     if not results:
         raise HTTPException(status_code=404, detail="No matching Clinical Trials found.")
     return [ClinicalTrialsSearchResponse.model_validate(result) for result in results]
 
-@app.get("/clinicaltrials/{nct_id}", response_model=ClinicalTrialsSearchResponse)
-def search_clinicaltrials(
+@router.get("/clinicaltrials/{nct_id}", response_model=ClinicalTrialsSearchResponse)
+def profile_clinicaltrials_nct_id(
     nct_id: str,
     db: Session = Depends(get_db)
 ):

@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func, select, or_
 from datetime import date
@@ -9,9 +9,9 @@ from app.db.session import get_db
 from app.db.models import PubMed
 
 # uvicorn app.routes.pubmed_routes:app --reload
-app = FastAPI()
+router = APIRouter()
 
-@app.get("/pubmed", response_model=List[PubMedSearchResponse])
+@router.get("/pubmed", response_model=List[PubMedSearchResponse])
 def search_pubmed(
     term: str | None = None,
     pmid: int | None = None,
@@ -20,6 +20,7 @@ def search_pubmed(
     start_date: date | None = None,
     end_date: date | None = None,
     language: str | None = None,
+    limit: int = 5,
     db: Session = Depends(get_db)
 ):
     stmt = select(PubMed)
@@ -47,15 +48,17 @@ def search_pubmed(
         ))
 
     if filters:
-        stmt = stmt.where(*filters).limit(5)
+        stmt = stmt.where(*filters)
+    if limit:
+        stmt = stmt.limit(limit)
 
     results = db.scalars(stmt).all()
     if not results:
         raise HTTPException(status_code=404, detail="No matching PubMed articles found.")
     return [PubMedSearchResponse.model_validate(result) for result in results]
 
-@app.get("/pubmed/{pmid}", response_model=PubMedSearchResponse)
-def search_pubmed(
+@router.get("/pubmed/{pmid}", response_model=PubMedSearchResponse)
+def profile_pubmed_pmid(
     pmid: int,
     db: Session = Depends(get_db)
 ):
