@@ -7,18 +7,18 @@ class ClinicalTrialsSearchResponse(BaseModel):
     brief_title: str
     org_name: str | None
     lead_sponsor: str | None
-    collaborators: list[str] | None
+    collaborators: list[str]
     brief_summary: str | None
-    conditions: list[str] | None
-    keywords: list[str] | None
+    conditions: list[str]
+    keywords: list[str]
     study_type: str | None
-    phase: list[str] | None
+    phase: list[str]
     city: str | None
     state: str | None
     zip: str | None
     country: str | None
     status: str | None
-    reference_pmid: list[str] | None
+    reference_pmid: list[str]
     start_date: date | None
     completion_date: date | None
     last_update_post_date: date | None
