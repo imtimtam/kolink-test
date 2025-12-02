@@ -1,4 +1,4 @@
-from sqlalchemy import ARRAY, Integer, String, BigInteger, Date, Text, Column
+from sqlalchemy import ARRAY, Integer, String, Date, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from .base import Base
