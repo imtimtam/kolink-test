@@ -10,7 +10,7 @@ class PubMedSearchResponse(BaseModel):
     publication_types: list[str]
     title: str | None
     journal_title: str | None
-    authors: list[Author] | None
+    authors: list[Author]
     abstract: str | None
     mesh_terms: list[str]
     date_published: date | None
