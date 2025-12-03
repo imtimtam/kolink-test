@@ -19,7 +19,7 @@ class PubMed(Base):
 
 class ClinicalTrials(Base):
     __tablename__ = 'clinicaltrials'
-
+    # Potentially swap to Optional[...] later
     nct_id: Mapped[str] = mapped_column(String, primary_key=True)
     official_title: Mapped[str | None] = mapped_column(String, nullable=True)
     brief_title: Mapped[str] = mapped_column(String, nullable=False)
@@ -40,6 +40,8 @@ class ClinicalTrials(Base):
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     completion_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     last_update_post_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    
+    # OLD
     # nct_id = Column(String, primary_key=True)
     # official_title = Column(String, nullable=True)
     # brief_title = Column(String, nullable=False)
