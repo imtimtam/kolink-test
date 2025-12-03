@@ -42,16 +42,16 @@ def get_cts(term: str | None = None, status: str | list[str]= "completed"):
     filtered = []
     for study in data.get("studies", []):
         ps = study.get("protocolSection", {})
-        rs = study.get("resultsSection", {})
+        #rs = study.get("resultsSection", {})
 
         id_mod = ps.get("identificationModule", {})
         sponsor_collaborators = ps.get("sponsorCollaboratorsModule", {})
         desc_mod = ps.get("descriptionModule", {})
         cond_mod = ps.get("conditionsModule", {})
         design_mod = ps.get("designModule", {})
-        outcome_mod = ps.get("outcomesModule", {})
-        eligibility_mod = ps.get("eligibilityModule", {})
-        contact_loc_mod = ps.get("contactsLocationsModule", {})
+        #outcome_mod = ps.get("outcomesModule", {})
+        #eligibility_mod = ps.get("eligibilityModule", {})
+        #contact_loc_mod = ps.get("contactsLocationsModule", {})
         reference_mod = ps.get("referencesModule", {})
         status_mod = ps.get("statusModule", {})
 
