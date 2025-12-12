@@ -2,7 +2,9 @@ import json
 from fastapi import FastAPI
 import requests
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 app = FastAPI()
 
 CT_BASE_URL = "https://clinicaltrials.gov/api/v2/"
@@ -120,8 +122,8 @@ def parse_date(date_str: str):
     return f"{year}-{month}-{day}"
 
 def export_year(year: int):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    OUTPUT_FOLDER = os.path.join(script_dir, "..", "exports")
+    #script_dir = os.path.dirname(os.path.abspath(__file__))
+    OUTPUT_FOLDER = os.getenv("OUTPUT_CT_DIR")
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
     OUTPUT_FILE = f"clinicaltrials_{year}.jsonl"
     full_path = os.path.join(OUTPUT_FOLDER, OUTPUT_FILE)
@@ -140,8 +142,8 @@ def export_year(year: int):
     print(f"All trials for {year} exported to {full_path}")
 
 if __name__ == "__main__":
-    # for year in range(2021, 2026):
-    #     export_year(year)
-    for batch in clinicaltrials_fetch_batches(max_count=20, pageSize=5):
-        parsed_trials = parse_clinicaltrials_json(batch)
-        print(json.dumps(parsed_trials, indent=2))
+    for year in range(2015, 2021):
+        export_year(year)
+    # for batch in clinicaltrials_fetch_batches(max_count=20, pageSize=5):
+    #     parsed_trials = parse_clinicaltrials_json(batch)
+    #     print(json.dumps(parsed_trials, indent=2))
