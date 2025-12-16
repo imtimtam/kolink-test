@@ -1,5 +1,5 @@
 import json
-from cache_services import cache_clinicaltrials_entries
+from app.services.supabase_cache_services import cache_clinicaltrials_entries
 from fastapi import FastAPI, HTTPException
 import requests
 
