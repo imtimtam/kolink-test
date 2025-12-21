@@ -50,14 +50,14 @@ def cache_pubmed_entries(start_year: int, end_year: int):
                     if len(entries) >= 500:
                         print("Upserting 500 entries")
                         # solves upsert error where duplicates may exist due to updating publications
-                        unique_entries = {e["pubmed_id"]: e for e in entries}
-                        supabase.table("publications").upsert(list(unique_entries.values()), on_conflict="pubmed_id").execute()
+                        unique_entries = dedupe_list(entries, "pubmed_id")
+                        supabase.table("publications").upsert(unique_entries, on_conflict="pubmed_id").execute()
                         entries.clear()
             
             if entries:
                 print("Upserting final batch")
-                unique_entries = {e["pubmed_id"]: e for e in entries}
-                supabase.table("publications").upsert(list(unique_entries.values()), on_conflict="pubmed_id").execute()
+                unique_entries = dedupe_list(entries, "pubmed_id")
+                supabase.table("publications").upsert(unique_entries, on_conflict="pubmed_id").execute()
 
 def cache_clinicaltrials_entries(start_year: int, end_year: int):
     for year in range(start_year, end_year + 1):
@@ -94,14 +94,14 @@ def cache_clinicaltrials_entries(start_year: int, end_year: int):
 
                     if len(entries) >= 500:
                         print("Upserting 500 entries")
-                        unique_entries = {e["trial_id"]: e for e in entries}
-                        supabase.table("clinicaltrials").upsert(list(unique_entries.values()), on_conflict="trial_id").execute()
+                        unique_entries = dedupe_list(entries, "trial_id")
+                        supabase.table("clinicaltrials").upsert(unique_entries, on_conflict="trial_id").execute()
                         entries.clear()
             
             if entries:
                 print("Upserting final batch")
-                unique_entries = {e["trial_id"]: e for e in entries}
-                supabase.table("clinicaltrials").upsert(list(unique_entries.values()), on_conflict="trial_id").execute()
+                unique_entries = dedupe_list(entries, "trial_id")
+                supabase.table("clinicaltrials").upsert(unique_entries, on_conflict="trial_id").execute()
 
 def cache_cms_payment_entries(start_year: int, end_year: int):
     for year in range(start_year, end_year + 1):
@@ -131,14 +131,14 @@ def cache_cms_payment_entries(start_year: int, end_year: int):
                     entries.append(entry)
                     if len(entries) >= 500:
                         print("Upserting 500 entries")
-                        unique_entries = {e["record_id"]: e for e in entries}
-                        supabase.table("payments").upsert(list(unique_entries.values()), on_conflict="record_id").execute()
+                        unique_entries = dedupe_list(entries, "record_id")
+                        supabase.table("payments").upsert(unique_entries, on_conflict="record_id").execute()
                         entries.clear()
             
             if entries:
                 print("Upserting final batch")
-                unique_entries = {e["record_id"]: e for e in entries}
-                supabase.table("payments").upsert(list(unique_entries.values()), on_conflict="record_id").execute()
+                unique_entries = dedupe_list(entries, "record_id")
+                supabase.table("payments").upsert(unique_entries, on_conflict="record_id").execute()
 
 def cache_physician_entries():
     for file in physicians_folder.glob("*CA.csv"):
@@ -174,17 +174,20 @@ def cache_physician_entries():
                 entries.append(entry)
                 if len(entries) >= 500:
                     print("Upserting 500 entries")
-                    unique_entries = {e["npi_id"]: e for e in entries}
-                    supabase.table("physicians").upsert(list(unique_entries.values()), on_conflict="npi_id").execute()
+                    unique_entries = dedupe_list(entries, "npi_id")
+                    supabase.table("physicians").upsert(unique_entries, on_conflict="npi_id").execute()
                     entries.clear()
         
         if entries:
             print("Upserting final batch")
-            unique_entries = {e["npi_id"]: e for e in entries}
-            supabase.table("physicians").upsert(list(unique_entries.values()), on_conflict="npi_id").execute()
+            unique_entries = dedupe_list(entries, "npi_id")
+            supabase.table("physicians").upsert(unique_entries, on_conflict="npi_id").execute()
 
 def join_list(list: list[str]):
     return ", ".join(list) if list else None
+
+def dedupe_list(entries, key):
+    return list({e[key]: e for e in entries}.values())
 
 def parse_date(date_str: str):
     return datetime.strptime(date_str, "%Y-%m-%d").date().isoformat() if date_str else None
