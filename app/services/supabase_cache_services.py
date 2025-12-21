@@ -37,14 +37,14 @@ def cache_pubmed_entries(start_year: int, end_year: int):
                     if not pubmed_id: continue
                     date_published = data.get("date_published")
                     entry = {
-                        "pubmed_id": pubmed_id,
-                        "title": data.get("title"),
-                        "journal": data.get("journal_title"),
-                        "publication_type": join_list(data.get("publication_types", [])),
+                        "pubmed_id": pubmed_id.strip(),
+                        "title": data.get("title").strip() if data.get("title") else None,
+                        "journal": data.get("journal_title").strip() if data.get("journal_title") else None,
+                        "publication_type": [p.strip() for p in data.get("publication_types", []) if p.strip()],
                         "authors": data.get("authors"),
-                        "mesh_terms": data.get("mesh_terms"),
-                        "date_published": parse_date(date_published),
-                        "year_published": int(date_published[:4]) if date_published else None
+                        "mesh_terms": [m.strip() for m in data.get("mesh_terms", []) if m.strip()],
+                        "published_date": parse_date(date_published),
+                        "published_year": int(date_published[:4]) if date_published else None
                     }
                     entries.append(entry)
                     if len(entries) >= 500:
@@ -79,12 +79,12 @@ def cache_clinicaltrials_entries(start_year: int, end_year: int):
                     start_date = data.get("start_date")
                     completion_date = data.get("completion_date")
                     entry = {
-                        "trial_id": trial_id,
-                        "title": data.get("brief_title"),
-                        "lead_sponsor": data.get("lead_sponsor"),
-                        "conditions": join_list(data.get("conditions", [])),
-                        "phase": join_list(data.get("phase", [])),
-                        "status": data.get("status"),
+                        "trial_id": trial_id.strip(),
+                        "title": data.get("brief_title").strip() if data.get("brief_title") else None,
+                        "lead_sponsor": data.get("lead_sponsor").strip() if data.get("lead_sponsor") else None,
+                        "conditions": [c.strip().upper() for c in data.get("conditions", []) if c.strip()],
+                        "phase": [p.strip().upper() for p in data.get("phase", []) if p.strip()],
+                        "status": data.get("status").strip() if data.get("status") else None,
                         "start_date": parse_date(start_date),
                         "start_year": int(start_date[:4]) if start_date else None,
                         "completion_date": parse_date(completion_date),
@@ -94,12 +94,14 @@ def cache_clinicaltrials_entries(start_year: int, end_year: int):
 
                     if len(entries) >= 500:
                         print("Upserting 500 entries")
-                        supabase.table("clinicaltrials").upsert(entries, on_conflict="trial_id").execute()
+                        unique_entries = {e["trial_id"]: e for e in entries}
+                        supabase.table("clinicaltrials").upsert(list(unique_entries.values()), on_conflict="trial_id").execute()
                         entries.clear()
             
             if entries:
                 print("Upserting final batch")
-                supabase.table("clinicaltrials").upsert(entries, on_conflict="trial_id").execute()
+                unique_entries = {e["trial_id"]: e for e in entries}
+                supabase.table("clinicaltrials").upsert(list(unique_entries.values()), on_conflict="trial_id").execute()
 
 def cache_cms_payment_entries(start_year: int, end_year: int):
     for year in range(start_year, end_year + 1):
@@ -114,27 +116,29 @@ def cache_cms_payment_entries(start_year: int, end_year: int):
                     # must have primary key
                     record_id = data.get("record_id")
                     if not record_id: continue
-                    year = data.get("program_year")
+                    program_year = data.get("program_year")
                     entry = {
-                        "record_id": record_id,
-                        "recipient_npi": data.get("covered_recipient_npi"),
-                        "amount": float(data.get("total_amount_of_payment_usdollars")),
-                        "payer": data.get("applicable_manufacturer_or_applicable_gpo_making_payment_name"),
-                        "transaction_type": data.get("transaction_type"),
-                        "recipient_city": data.get("recipient_city"),
-                        "recipient_state": data.get("recipient_state"), 
-                        "date": parse_date(data.get("date_of_payment")),
-                        "year": int(year) if year else None
+                        "record_id": record_id.strip(),
+                        "recipient_npi": data.get("covered_recipient_npi").strip() if data.get("covered_recipient_npi") else None,
+                        "amount": float(data.get("total_amount_of_payment_usdollars")) if data.get("total_amount_of_payment_usdollars") else None,
+                        "payer": data.get("applicable_manufacturer_or_applicable_gpo_making_payment_name").strip() if data.get("applicable_manufacturer_or_applicable_gpo_making_payment_name") else None,
+                        "transaction_type": data.get("transaction_type").strip().upper() if data.get("transaction_type") else None,
+                        "recipient_city": data.get("recipient_city").strip().title() if data.get("recipient_city") else None,
+                        "recipient_state": data.get("recipient_state").strip().upper() if data.get("recipient_state") else None, 
+                        "payment_date": parse_date(data.get("date_of_payment")),
+                        "payment_year": int(program_year) if program_year else None
                     }
                     entries.append(entry)
                     if len(entries) >= 500:
                         print("Upserting 500 entries")
-                        supabase.table("payments").upsert(entries, on_conflict="record_id").execute()
+                        unique_entries = {e["record_id"]: e for e in entries}
+                        supabase.table("payments").upsert(list(unique_entries.values()), on_conflict="record_id").execute()
                         entries.clear()
             
             if entries:
                 print("Upserting final batch")
-                supabase.table("payments").upsert(entries, on_conflict="record_id").execute()
+                unique_entries = {e["record_id"]: e for e in entries}
+                supabase.table("payments").upsert(list(unique_entries.values()), on_conflict="record_id").execute()
 
 def cache_physician_entries():
     for file in physicians_folder.glob("*CA.csv"):
@@ -160,9 +164,9 @@ def cache_physician_entries():
                     "primary_taxonomy_code": data.get("PrimaryTaxonomyCode").strip() if data.get("PrimaryTaxonomyCode") else None,
                     "primary_taxonomy_desc": data.get("PrimaryTaxonomyDesc").strip() if data.get("PrimaryTaxonomyDesc") else None,
                     "license_number": data.get("PrimaryTaxonomyLicense").strip() if data.get("PrimaryTaxonomyLicense") else None,
-                    "license_state": data.get("PrimaryTaxonomyState").strip() if data.get("PrimaryTaxonomyState") else None,
+                    "license_state": data.get("PrimaryTaxonomyState").strip().upper() if data.get("PrimaryTaxonomyState") else None,
                     "practice_city": data.get("Practice_City").strip().title() if data.get("Practice_City") else None,
-                    "practice_state": data.get("Practice_State").strip() if data.get("Practice_State") else None,
+                    "practice_state": data.get("Practice_State").strip().upper() if data.get("Practice_State") else None,
                     "practice_zip": data.get("Practice_Zip").strip() if data.get("Practice_Zip") else None,
                     "npi_created_at": parse_date(data.get("CreatedDate")),
                     "npi_updated_at": parse_date(data.get("LastUpdatedDate"))
