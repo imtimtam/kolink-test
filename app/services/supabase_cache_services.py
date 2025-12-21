@@ -155,12 +155,15 @@ def cache_physician_entries():
                 last_name = data.get("LastName")
                 if not npi_id or not first_name or not last_name: continue
 
+                credentials = data.get("Credential")
+                credentials_array = [c.strip().replace(".", "").upper() for c in credentials.split(", ")] if credentials else []
+
                 entry = {
                     "npi_id": npi_id.strip(),
                     "first_name": first_name.strip().title(),
                     "middle_name": data.get("MiddleName").strip(" .").title() if data.get("MiddleName") else None,
                     "last_name": last_name.strip().title(),
-                    "credential": data.get("Credential").strip().replace(".", "").upper() if data.get("Credential") else None,
+                    "credentials": credentials_array,
                     "primary_taxonomy_code": data.get("PrimaryTaxonomyCode").strip() if data.get("PrimaryTaxonomyCode") else None,
                     "primary_taxonomy_desc": data.get("PrimaryTaxonomyDesc").strip() if data.get("PrimaryTaxonomyDesc") else None,
                     "license_number": data.get("PrimaryTaxonomyLicense").strip() if data.get("PrimaryTaxonomyLicense") else None,
