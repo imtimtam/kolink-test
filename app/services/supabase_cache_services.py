@@ -41,7 +41,10 @@ def cache_pubmed_entries(start_year: int, end_year: int):
                         "title": data.get("title"),
                         "journal": data.get("journal_title"),
                         "publication_type": join_list(data.get("publication_types", [])),
-                        "year": int(date_published[:4]) if date_published else None
+                        "authors": data.get("authors"),
+                        "mesh_terms": data.get("mesh_terms"),
+                        "date_published": parse_date(date_published),
+                        "year_published": int(date_published[:4]) if date_published else None
                     }
                     entries.append(entry)
                     if len(entries) >= 500:
@@ -74,13 +77,18 @@ def cache_clinicaltrials_entries(start_year: int, end_year: int):
                     trial_id = data.get("nct_id")
                     if not trial_id: continue
                     start_date = data.get("start_date")
+                    completion_date = data.get("completion_date")
                     entry = {
                         "trial_id": trial_id,
                         "title": data.get("brief_title"),
+                        "lead_sponsor": data.get("lead_sponsor"),
                         "conditions": join_list(data.get("conditions", [])),
                         "phase": join_list(data.get("phase", [])),
                         "status": data.get("status"),
-                        "start_year": int(start_date[:4]) if start_date else None
+                        "start_date": parse_date(start_date),
+                        "start_year": int(start_date[:4]) if start_date else None,
+                        "completion_date": parse_date(completion_date),
+                        "completion_year": int(completion_date[:4]) if completion_date else None
                     }
                     entries.append(entry)
 
@@ -113,6 +121,9 @@ def cache_cms_payment_entries(start_year: int, end_year: int):
                         "amount": float(data.get("total_amount_of_payment_usdollars")),
                         "payer": data.get("applicable_manufacturer_or_applicable_gpo_making_payment_name"),
                         "transaction_type": data.get("transaction_type"),
+                        "recipient_city": data.get("recipient_city"),
+                        "recipient_state": data.get("recipient_state"), 
+                        "date": parse_date(data.get("date_of_payment")),
                         "year": int(year) if year else None
                     }
                     entries.append(entry)
